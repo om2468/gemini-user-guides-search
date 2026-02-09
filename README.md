@@ -1,6 +1,6 @@
-# 📚 GSPP User Guides Search
+# 📚 PDF Guide Search
 
-A Streamlit-powered search application that uses Google's Gemini AI to answer questions about GSPP (Job Planning Application and Sweet Editor) user guides. The app leverages Gemini's File Search capability to provide accurate, documentation-based answers with citations.
+A Streamlit-powered search application that uses Google's Gemini AI to answer questions from your PDF documents. The app leverages Gemini's File Search capability to provide accurate, documentation-based answers with citations.
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)
@@ -8,59 +8,53 @@ A Streamlit-powered search application that uses Google's Gemini AI to answer qu
 
 ## ✨ Features
 
-- **🔍 AI-Powered Search** – Ask natural language questions about GSPP software
-- **📄 Citation Support** – Get answers with direct citations from the documentation
+- **🔍 AI-Powered Search** – Ask natural language questions about your documents
+- **📄 Citation Support** – Get answers with direct citations from your PDFs
 - **💬 Chat Interface** – Intuitive conversational UI with chat history
-- **📖 Documentation-Only Mode** – Answers strictly from the indexed user guides
-- **🔧 Debug Mode** – Optional raw metadata view for troubleshooting
+- **📖 Documentation-Only Mode** – Answers strictly from indexed documents
+- **🔐 Access Control** – Optional Store ID prompt for secure deployments
+- **🔧 Debug Mode** – View raw API metadata for troubleshooting
 
 ## 📋 Prerequisites
 
 - **Python 3.9+**
 - **Google Gemini API Key** – Get one from [Google AI Studio](https://aistudio.google.com/apikey)
+- **PDF Documents** – Place your PDFs in the `user guides/` folder
 
 ## 🚀 Quick Start
 
-### 1. Clone or Download the Repository
-
-```bash
-cd "OS user guides"
-```
-
-### 2. Install Dependencies
+### 1. Install Dependencies
 
 ```bash
 pip install google-genai python-dotenv streamlit
 ```
 
-### 3. Configure Environment
+### 2. Configure Environment
 
-Create a `.env` file in the project root (or copy from `.env.example`):
-
-```bash
-# Copy the example file
-cp .env.example .env
-```
-
-Then edit `.env` and add your Gemini API key:
+Create a `.env` file in the project root:
 
 ```env
 GEMINI_API_KEY=your-api-key-here
 ```
 
+### 3. Add Your PDFs
+
+Place your PDF documents in the `user guides/` folder, then update `setup.py` with your file names:
+
+```python
+PDF_FILES = [
+    ("user guides/Your Document 1.pdf", "Display Name 1"),
+    ("user guides/Your Document 2.pdf", "Display Name 2"),
+]
+```
+
 ### 4. Run Setup (First Time Only)
 
-This creates a File Search store in Gemini and uploads the PDF user guides:
+This creates a File Search store in Gemini and uploads your PDFs:
 
 ```bash
 python setup.py
 ```
-
-The setup will:
-- ✅ Verify PDF files exist
-- ✅ Create a File Search store named "GSPP-User-Guides"
-- ✅ Upload and index both user guide PDFs
-- ✅ Save configuration to `file_search_config.json`
 
 ### 5. Launch the Application
 
@@ -68,99 +62,107 @@ The setup will:
 python -m streamlit run app.py
 ```
 
-The app will open in your default browser at `http://localhost:8501`
+The app will open at `http://localhost:8501`
 
 ## 📁 Project Structure
 
 ```
-OS user guides/
 ├── app.py                      # Main Streamlit application
 ├── setup.py                    # Initial setup script
-├── file_search_guides.py       # File search utilities
+├── requirements.txt            # Python dependencies
 ├── file_search_config.json     # Generated config (after setup)
 ├── .env                        # Your API key (gitignored)
 ├── .env.example                # Example environment file
+├── .gitignore                  # Git ignore rules
 ├── README.md                   # This file
-└── user guides/
-    ├── GSPP Job Planning Application User Guide.pdf
-    └── GSPP Sweet Editor User Guide.pdf
+└── user guides/                # Your PDF documents
 ```
 
-## 🎮 Usage
+## ☁️ Deploying to Streamlit Cloud
 
-### Asking Questions
+### 1. Push to GitHub
 
-Simply type your question in the chat input at the bottom of the page. Examples:
+Your `.gitignore` already excludes sensitive files. Push your code:
 
-- "How do I create a new job?"
-- "What are the keyboard shortcuts?"
-- "How do I export data?"
-- "What file formats are supported?"
+```bash
+git add .
+git commit -m "Ready for deployment"
+git push
+```
 
-### Sidebar Features
+### 2. Deploy on Streamlit Cloud
 
-- **📖 Indexed Documents** – Shows which PDFs are currently indexed
-- **⚙️ Settings** – Displays current model and mode
-- **💡 Example Questions** – Click to quickly ask common questions
-- **🔧 Debug Mode** – Toggle to view raw API metadata
+1. Go to [share.streamlit.io](https://share.streamlit.io)
+2. Sign in with GitHub and select your repo
+3. Set `app.py` as the main file
 
-### Citations
+### 3. Configure Secrets
 
-Each answer includes expandable citations showing:
-- The source document title
-- The relevant text excerpt from the documentation
+In **Advanced settings** → **Secrets**, add:
 
-## ⚙️ Configuration
+```toml
+GEMINI_API_KEY = "your-api-key"
+```
 
-### Model
+If you want users to enter the Store ID themselves (for access control):
+- Leave `STORE_NAME` out of secrets
+- Share the Store ID only with authorized users
 
-The app uses `gemini-3-flash-preview` by default. To change this, edit the `MODEL` constant in `app.py`:
+Or pre-configure access:
+
+```toml
+GEMINI_API_KEY = "your-api-key"
+STORE_NAME = "fileSearchStores/your-store-id"
+```
+
+## ⚙️ Customization
+
+### Change the Model
+
+Edit the `MODEL` constant in `app.py`:
 
 ```python
 MODEL = "gemini-3-flash-preview"
 ```
 
-### System Instructions
+### Customize System Instructions
 
-The AI is configured to only answer from the documentation. The system prompt can be customized in `app.py` via the `SYSTEM_INSTRUCTION` variable.
+Modify `SYSTEM_INSTRUCTION` in `app.py` to change how the AI responds.
+
+### Update Branding
+
+Edit the header text and styling in `app.py` to match your organization.
 
 ## 🔧 Troubleshooting
 
-### "Setup Required" Error
+### "Access Required" Prompt
 
-If you see this error, run the setup script first:
+If you see this, either:
+- Enter your Store ID (from `file_search_config.json`)
+- Add `STORE_NAME` to Streamlit secrets
 
-```bash
-python setup.py
-```
+### API Key Error
 
-### "GEMINI_API_KEY" Error
-
-Ensure your `.env` file exists and contains a valid API key:
+Ensure your `.env` file contains a valid key:
 
 ```env
 GEMINI_API_KEY=your-actual-api-key
 ```
 
-### PDF Files Not Found
-
-Ensure the PDF files are in the `user guides/` subdirectory:
-- `user guides/GSPP Job Planning Application User Guide.pdf`
-- `user guides/GSPP Sweet Editor User Guide.pdf`
-
 ### Re-indexing Documents
 
-If you need to re-upload the documents, delete `file_search_config.json` and run `setup.py` again:
+Delete `file_search_config.json` and run `setup.py` again:
 
 ```bash
-del file_search_config.json
+del file_search_config.json   # Windows
+rm file_search_config.json    # Mac/Linux
 python setup.py
 ```
 
 ## 📝 License
 
-This project is for internal use with GSPP documentation.
+MIT License - Feel free to use and modify.
 
 ## 🤝 Contributing
 
-For issues or feature requests, please contact the development team.
+Contributions welcome! Please open an issue or pull request.
