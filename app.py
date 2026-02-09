@@ -350,7 +350,7 @@ def main():
                         if metadata:
                             chunks = getattr(metadata, 'grounding_chunks', []) or []
                             supports = getattr(metadata, 'grounding_supports', []) or []
-                            with st.expander("🔧 Raw Grounding Metadata", expanded=True):
+                            with st.expander("🔧 Raw Grounding Metadata", expanded=False):
                                 # Build clean output without empty lines
                                 output = {
                                     'grounding_chunks': [str(c) for c in chunks] if chunks else [],
