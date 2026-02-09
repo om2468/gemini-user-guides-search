@@ -313,10 +313,6 @@ def main():
         for example in examples:
             if st.button(example, key=example):
                 st.session_state.question = example
-        
-        # Debug mode toggle
-        st.markdown("---")
-        st.session_state.debug_mode = st.checkbox("🔧 Show raw metadata", value=False)
     
     # Chat history
     if "messages" not in st.session_state:
@@ -326,18 +322,9 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-            if message["role"] == "assistant" and message.get("citations"):
-                with st.expander(f"📎 View {len(message['citations'])} Citation(s)", expanded=False):
-                    for i, citation in enumerate(message["citations"], 1):
-                        source_text = citation.get('source_text', '')
-                        display_text = source_text[:500] + '...' if len(source_text) > 500 else source_text
-                        
-                        st.markdown(f"""
-                        <div class="citation-box">
-                            <div class="citation-title">📄 [{i}] {citation['title']}</div>
-                            <div class="citation-text">"{display_text}"</div>
-                        </div>
-                        """, unsafe_allow_html=True)
+            if message["role"] == "assistant" and message.get("grounding_metadata"):
+                st.markdown("**📎 Grounding Metadata:**")
+                st.code(message["grounding_metadata"], language=None)
     
     # Chat input
     question = st.chat_input("Ask a question about the GSPP user guides...")
@@ -360,35 +347,36 @@ def main():
                     
                     st.markdown(answer)
                     
-                    if citations:
-                        with st.expander(f"📎 View {len(citations)} Citation(s)", expanded=True):
-                            for i, citation in enumerate(citations, 1):
-                                source_text = citation.get('source_text', '')
-                                display_text = source_text[:500] + '...' if len(source_text) > 500 else source_text
-                                
-                                st.markdown(f"""
-                                <div class="citation-box">
-                                    <div class="citation-title">📄 [{i}] {citation['title']}</div>
-                                    <div class="citation-text">"{display_text}"</div>
-                                </div>
-                                """, unsafe_allow_html=True)
-                    else:
-                        st.info("ℹ️ No specific citations returned.")
+                    # Show grounding metadata
+                    grounding_text = ""
+                    if response.candidates:
+                        metadata = response.candidates[0].grounding_metadata
+                        if metadata:
+                            chunks = getattr(metadata, 'grounding_chunks', []) or []
+                            supports = getattr(metadata, 'grounding_supports', []) or []
+                            lines = []
+                            lines.append(f"Chunks: {len(chunks)}")
+                            for i, chunk in enumerate(chunks):
+                                ctx = getattr(chunk, 'retrieved_context', None)
+                                if ctx:
+                                    title = getattr(ctx, 'title', '') or 'Unknown'
+                                    uri = getattr(ctx, 'uri', '')
+                                    if title:
+                                        lines.append(f"  [{i}] {title}")
+                                    if uri:
+                                        lines.append(f"      URI: {uri}")
+                            lines.append(f"Supports: {len(supports)}")
+                            # Filter empty lines
+                            grounding_text = '\n'.join(line for line in lines if line.strip())
                     
-                    # Debug: show raw metadata
-                    if st.session_state.get('debug_mode') and response.candidates:
-                        with st.expander("🔧 Raw Grounding Metadata", expanded=False):
-                            metadata = response.candidates[0].grounding_metadata
-                            if metadata:
-                                st.json({
-                                    'grounding_chunks': str(getattr(metadata, 'grounding_chunks', [])),
-                                    'grounding_supports': str(getattr(metadata, 'grounding_supports', [])),
-                                })
+                    if grounding_text:
+                        st.markdown("**📎 Grounding Metadata:**")
+                        st.code(grounding_text, language=None)
                     
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
-                        "citations": citations
+                        "grounding_metadata": grounding_text
                     })
                     
                 except Exception as e:
