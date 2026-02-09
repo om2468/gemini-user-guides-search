@@ -322,9 +322,6 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-            if message["role"] == "assistant" and message.get("grounding_metadata"):
-                st.markdown("**📎 Grounding Metadata:**")
-                st.code(message["grounding_metadata"], language=None)
     
     # Chat input
     question = st.chat_input("Ask a question about the GSPP user guides...")
@@ -347,36 +344,23 @@ def main():
                     
                     st.markdown(answer)
                     
-                    # Show grounding metadata
-                    grounding_text = ""
+                    # Show raw grounding metadata (expanded by default)
                     if response.candidates:
                         metadata = response.candidates[0].grounding_metadata
                         if metadata:
                             chunks = getattr(metadata, 'grounding_chunks', []) or []
                             supports = getattr(metadata, 'grounding_supports', []) or []
-                            lines = []
-                            lines.append(f"Chunks: {len(chunks)}")
-                            for i, chunk in enumerate(chunks):
-                                ctx = getattr(chunk, 'retrieved_context', None)
-                                if ctx:
-                                    title = getattr(ctx, 'title', '') or 'Unknown'
-                                    uri = getattr(ctx, 'uri', '')
-                                    if title:
-                                        lines.append(f"  [{i}] {title}")
-                                    if uri:
-                                        lines.append(f"      URI: {uri}")
-                            lines.append(f"Supports: {len(supports)}")
-                            # Filter empty lines
-                            grounding_text = '\n'.join(line for line in lines if line.strip())
-                    
-                    if grounding_text:
-                        st.markdown("**📎 Grounding Metadata:**")
-                        st.code(grounding_text, language=None)
+                            with st.expander("🔧 Raw Grounding Metadata", expanded=True):
+                                # Build clean output without empty lines
+                                output = {
+                                    'grounding_chunks': [str(c) for c in chunks] if chunks else [],
+                                    'grounding_supports': [str(s) for s in supports] if supports else [],
+                                }
+                                st.json(output)
                     
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": answer,
-                        "grounding_metadata": grounding_text
+                        "content": answer
                     })
                     
                 except Exception as e:
